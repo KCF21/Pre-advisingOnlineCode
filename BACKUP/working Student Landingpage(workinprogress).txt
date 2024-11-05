@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Landing Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            margin-top: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Student Landing Page</h1>
+        </div>
+        <div class="section" id="student-info" ></div>
+        <div class="section">
+            <h2>Enrolled Subjects:</h2>
+            <div id="enrolled-subjects"></div>
+        </div>
+        <div class="section">
+            <h2>Recommended Subjects:</h2>
+            <div id="recommended-subjects"></div>
+        </div>
+        <div class="section">
+            <h2>Maximum Units Allowed:</h2>
+            <p id="max-units-info">Loading...</p> <!-- New section to display max units -->
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-K6Hfx5jrTvnilwha29ceKov0PC2kII0",
+            authDomain: "pre-advisingdb.firebaseapp.com",
+            projectId: "pre-advisingdb",
+            storageBucket: "pre-advisingdb.appspot.com",
+            messagingSenderId: "879799797410",
+            appId: "1:879799797410:web:9a52fbf15ce59b8bda39fb",
+            measurementId: "G-MSMWJ52KBW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.onload = async () => {
+            const studentId = localStorage.getItem('studentId');
+            const course = localStorage.getItem('course');
+
+            if (studentId && course) {
+                await fetchStudentData(studentId, course);
+                await fetchEnrolledSubjects(course, studentId);
+                await fetchMaxUnits(course); // New function call to fetch max units
+            } else {
+                alert('No student ID found in local storage.');
+                window.location.href = 'studentlogin.html';
+            }
+        };
+
+      // Fetch student data
+async function fetchStudentData(studentId, course) {
+    try {
+        const docRef = doc(db, `Students/${course}/StudentData`, studentId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const studentData = docSnap.data();
+            document.getElementById('student-info').innerHTML = `
+                <h2>Welcome, ${studentData.name}</h2>
+                <p>Course: ${course}</p>
+                <p>Year Level: ${studentData.year}</p>
+                <p>Semester: ${studentData.semester}</p>
+                <p>Status: ${studentData.status}</p>
+            `;
+
+            // Retrieve year and semester from student data
+            const studentYear = studentData.year;
+            const studentSemester = studentData.semester;
+
+            console.log(`Student Data Retrieved: Year = ${studentYear}, Semester = ${studentSemester}`);
+
+            // Fetch max units for the retrieved year and semester
+            await fetchMaxUnits(course, studentYear, studentSemester);
+
+            if (studentData.status === "Regular") {
+                await recommendRegularSubjects(course, studentYear, studentSemester);
+            } else if (studentData.status === "Irregular") {
+                await recommendIrregularSubjects(course, studentId);
+            }
+
+            return studentData; // Return studentData for use elsewhere
+        } else {
+            console.error('No such student document!');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching student data:', error);
+        return null;
+    }
+}
+
+// Fetch Max Units from Database
+async function fetchMaxUnits(courseId, year, semester) {
+    // Log incoming parameters
+    console.log(`Fetching Max Units - Course ID: ${courseId}, Year: ${year}, Semester: ${semester}`);
+
+    if (!courseId || !year || !semester) {
+        console.error("Year or semester information is missing or incorrect.");
+        return;
+    }
+
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnapshot = await getDoc(courseRef);
+        
+        if (courseSnapshot.exists()) {
+            const courseData = courseSnapshot.data();
+            console.log("Course Data Structure:", courseData); // Log course data structure
+            
+            const yearsData = courseData.years;
+            console.log("Years data found:", yearsData); // Log years data
+            
+            // Access the specific year data
+            const yearData = yearsData[year];
+            if (yearData) {
+                console.log("Year Data:", yearData); // Log year data
+                
+                // Access the semester data
+                const semesterData = yearData[semester];
+                if (semesterData && semesterData.maxUnits) {
+                    const maxUnits = semesterData.maxUnits;
+                    console.log("Max Units for Year:", year, "Semester:", semester, "is", maxUnits);
+                    
+                    // Update the HTML to show the max units
+                    document.getElementById('max-units-info').textContent = `Max Units for Year ${year}, Semester ${semester} is ${maxUnits}`;
+                } else {
+                    console.warn(`Semester ${semester} not found for Year ${year} in data.`);
+                    document.getElementById('max-units-info').textContent = `Semester data not found.`;
+                }
+            } else {
+                console.warn(`Year ${year} not found in data.`);
+                document.getElementById('max-units-info').textContent = `Year data not found.`;
+            }
+        } else {
+            console.error("Course document not found.");
+            document.getElementById('max-units-info').textContent = `Course data not found.`;
+        }
+    } catch (error) {
+        console.error("Error fetching max units:", error);
+        document.getElementById('max-units-info').textContent = `Error fetching data.`;
+    }
+}
+
+// Call the function to fetch max units based on the logged-in student
+fetchMaxUnits(courseId, studentYear, studentSemester);
+
+
+        // Fetch enrolled subjects
+        async function fetchEnrolledSubjects(course, studentId) {
+            const enrolledSubjectsDiv = document.getElementById('enrolled-subjects');
+            enrolledSubjectsDiv.innerHTML = '<h3>Enrolled Subjects:</h3>';
+            const table = document.createElement('table');
+            table.innerHTML = `
+            <tr>
+                <th>Year</th>
+                <th>Semester</th>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Units</th>
+                <th>Status</th>
+                <th>Indicator</th>
+            </tr>
+        `;
+
+            try {
+                const enrollmentDocRef = doc(db, `Enrollments/${course}/EnrollmentData`, studentId);
+                const enrollmentSnap = await getDoc(enrollmentDocRef);
+
+                if (enrollmentSnap.exists()) {
+                    const enrollmentData = enrollmentSnap.data();
+                    const enrolledSubject = enrollmentData.enrolledSubject || {};
+                    const failedSubject = enrollmentData.failedSubject || {};
+
+                    const coursesRef = doc(db, `courses/${course}`);
+                    const coursesSnap = await getDoc(coursesRef);
+                    const coursesData = coursesSnap.data();
+                    const subjectsData = coursesData.subjects;
+
+                    const subjectMap = {};
+                    for (const year in subjectsData) {
+                        for (const semester in subjectsData[year]) {
+                            const subjectsArray = subjectsData[year][semester];
+                            subjectsArray.forEach(subject => {
+                                subjectMap[subject.subjectId] = {
+                                    name: subject.subjectName,
+                                    units: subject.units
+                                };
+                            });
+                        }
+                    }
+
+                    for (const year in enrolledSubject) {
+                        for (const semester in enrolledSubject[year]) {
+                            const subjectsArray = enrolledSubject[year][semester];
+                            if (Array.isArray(subjectsArray)) {
+                                subjectsArray.forEach(subjectCode => {
+                                    const subjectInfo = subjectMap[subjectCode] || {
+                                        name: 'Unknown Subject',
+                                        units: 'N/A'
+                                    };
+                                    const isFailed = failedSubject[year]?.[semester]?.includes(subjectCode);
+                                    const status = isFailed ? 'Failed' : 'Enrolled';
+                                    const indicator = isFailed ? 'Retake' : 'N/A';
+
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td>${year}</td>
+                                        <td>${semester}</td>
+                                        <td>${subjectCode}</td>
+                                        <td>${subjectInfo.name}</td>
+                                        <td>${subjectInfo.units}</td>
+                                        <td>${status}</td>
+                                        <td>${indicator}</td>
+                                    `;
+                                    table.appendChild(row);
+                                });
+                            }
+                        }
+                    }
+                    enrolledSubjectsDiv.appendChild(table);
+                } else {
+                    enrolledSubjectsDiv.innerHTML += `<p>No subjects found for this student.</p>`;
+                }
+            } catch (error) {
+                console.error('Error fetching enrolled subjects:', error);
+            }
+        }
+
+     // Function to recommend regular subjects
+async function recommendRegularSubjects(course, year, semester) {
+    const recommendedSubjectsDiv = document.getElementById('recommended-subjects');
+    recommendedSubjectsDiv.innerHTML = '<h3>Recommended Subjects for Regular Students:</h3>';
+    const recommendedTable = document.createElement('table');
+    recommendedTable.innerHTML = `
+        <tr>
+            <th>Year</th>
+            <th>Semester</th>
+            <th>Subject Code</th>
+            <th>Subject Name</th>
+            <th>Units</th>
+            <th>Status</th>
+            <th>Indicator</th>
+        </tr>
+    `;
+
+    let nextSemester;
+    let nextYear = year; // Start with the current year
+
+    // Determine the next semester and adjust the year if necessary
+    if (semester = '1') {
+        nextSemester = '2';
+    } else {
+        nextSemester = '1'; // Move to the next year's first semester
+        nextYear = parseInt(year) + 1; // Increment the year
+    }
+
+    try {
+        const subjectsRef = doc(db, `courses/${course}`);
+        const subjectsSnap = await getDoc(subjectsRef);
+        const subjectsData = subjectsSnap.data().subjects;
+
+        // Fetch subjects for the next semester
+        const subjects = subjectsData[nextYear]?.[nextSemester];
+        if (subjects && subjects.length > 0) {
+            subjects.forEach(subject => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${nextYear}</td>
+                    <td>${nextSemester}</td>
+                    <td>${subject.subjectId}</td>
+                    <td>${subject.subjectName}</td>
+                    <td>${subject.units}</td>
+                    <td>Available</td>
+                    <td>N/A</td>
+                `;
+                recommendedTable.appendChild(row);
+            });
+            recommendedSubjectsDiv.appendChild(recommendedTable);
+        } else {
+            recommendedSubjectsDiv.innerHTML += `<p>No subjects available for recommendation.</p>`;
+        }
+    } catch (error) {
+        console.error('Error fetching recommended subjects for regular students:', error);
+    }
+}
+
+// Function to recommend subjects with rollover functionality for irregular students
+async function recommendIrregularSubjects(course, studentId) {
+    const recommendedSubjectsDiv = document.getElementById('recommended-subjects');
+    recommendedSubjectsDiv.innerHTML = '<h3>Recommended Subjects for Irregular Students:</h3>';
+    const recommendedTable = document.createElement('table');
+
+    recommendedTable.innerHTML = `
+        <tr>
+            <th>Year</th>
+            <th>Semester</th>
+            <th>Subject Code</th>
+            <th>Subject Name</th>
+            <th>Units</th>
+            <th>Status</th>
+            <th>Indicator</th>
+        </tr>
+    `;
+
+    try {
+        const studentDocRef = doc(db, `Students/${course}/StudentData`, studentId);
+        const studentSnap = await getDoc(studentDocRef);
+
+        if (!studentSnap.exists()) {
+            console.warn('Student data not found in Firebase.');
+            return;
+        }
+
+        const studentData = studentSnap.data();
+        let currentYear = studentData.year;
+        let currentSemester = studentData.semester;
+
+        const enrollmentDocRef = doc(db, `Enrollments/${course}/EnrollmentData`, studentId);
+        const enrollmentSnap = await getDoc(enrollmentDocRef);
+        const failedSubjects = [];
+        const missedSubjects = []; // Array to track subjects missed due to max units limit
+
+        if (enrollmentSnap.exists()) {
+            const enrollmentData = enrollmentSnap.data();
+            if (enrollmentData.failedSubject) {
+                for (const yr in enrollmentData.failedSubject) {
+                    for (const sem in enrollmentData.failedSubject[yr]) {
+                        const subjectsArray = enrollmentData.failedSubject[yr][sem];
+                        if (Array.isArray(subjectsArray)) {
+                            failedSubjects.push(...subjectsArray);
+                        }
+                    }
+                }
+            }
+        }
+
+        const subjectsRef = doc(db, `courses/${course}`);
+        const subjectsSnap = await getDoc(subjectsRef);
+
+        if (!subjectsSnap.exists()) {
+            console.warn('Subjects data not found in Firebase.');
+            return;
+        }
+
+        const subjectsData = subjectsSnap.data();
+        const recommendedSubjects = [];
+        let remainingUnits = subjectsData.years[currentYear]?.[currentSemester]?.maxUnits || 0;
+
+        function addSubjectsToRecommended(subjectList, status, indicator, allowOverflow = false) {
+            subjectList.forEach(subjectId => {
+                let subjectFound = false;
+
+                for (const yr in subjectsData.subjects) {
+                    for (const sem in subjectsData.subjects[yr]) {
+                        const subject = subjectsData.subjects[yr][sem].find(sub => sub.subjectId === subjectId);
+                        if (subject) {
+                            subjectFound = true;
+
+                            // Check for units and manage rollover
+                            if (remainingUnits >= subject.units) {
+                                recommendedSubjects.push({
+                                    year: yr,
+                                    semester: sem,
+                                    subjectId: subject.subjectId,
+                                    subjectName: subject.subjectName,
+                                    units: subject.units,
+                                    status: status,
+                                    indicator: indicator
+                                });
+                                remainingUnits -= subject.units;
+                            } else if (allowOverflow) {
+                                // Add rollover subjects that exceed max units to missedSubjects for future semesters
+                                missedSubjects.push(subjectId);
+                            }
+                            break; // Exit inner loop once subject is found
+                        }
+                    }
+                    if (subjectFound) break; // Exit outer loop if subject is found
+                }
+            });
+        }
+
+        // Add failed subjects first
+        addSubjectsToRecommended(failedSubjects, 'Retake', 'Failed', false);
+
+        // Fetch current semester subjects
+        const currentSemesterSubjects = subjectsData.subjects[currentYear]?.[currentSemester] || [];
+        const availableSubjects = currentSemesterSubjects.filter(subject => {
+            return subject.prerequisites.every(prerequisite => !failedSubjects.includes(prerequisite));
+        });
+
+        // Add available subjects next
+        addSubjectsToRecommended(availableSubjects.map(sub => sub.subjectId), 'Available', 'N/A', true);
+
+        // Rollover logic: Process missed subjects
+        while (missedSubjects.length > 0) {
+            // Prepare for the next semester or year
+            if (currentSemester === "1") {
+                currentSemester = "2";
+            } else {
+                currentSemester = "1";
+                currentYear = (parseInt(currentYear) + 1).toString(); // Move to next year
+            }
+
+            // Update remaining units for the next semester
+            remainingUnits = subjectsData.years[currentYear]?.[currentSemester]?.maxUnits || 0;
+
+            // Add missed subjects as 'Retake (Rollover)' status
+            addSubjectsToRecommended(missedSubjects, 'Retake (Rollover)', 'Missed', false);
+            missedSubjects.length = 0; // Clear missedSubjects for next iteration
+        }
+
+        // Populate the recommended table with subjects
+        recommendedSubjects.forEach(subject => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${subject.year}</td>
+                <td>${subject.semester}</td>
+                <td>${subject.subjectId}</td>
+                <td>${subject.subjectName}</td>
+                <td>${subject.units}</td>
+                <td>${subject.status}</td>
+                <td>${subject.indicator}</td>
+            `;
+            recommendedTable.appendChild(row);
+        });
+
+        recommendedSubjectsDiv.appendChild(recommendedTable);
+
+        if (recommendedSubjects.length === 0) {
+            recommendedSubjectsDiv.innerHTML += `<p>No subjects added to recommended list.</p>`;
+            console.warn("No subjects added to recommended list.");
+        }
+    } catch (error) {
+        console.error('Error fetching recommended subjects for irregular students:', error);
+    }
+}
+
+    </script>
+</body>
+</html>

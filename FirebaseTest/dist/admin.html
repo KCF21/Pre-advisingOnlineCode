@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <!-- Import Firebase CDN -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-K6Hfx5jrTvnilwha29ceKov0PC2kII0",
+            authDomain: "pre-advisingdb.firebaseapp.com",
+            projectId: "pre-advisingdb",
+            storageBucket: "pre-advisingdb.appspot.com",
+            messagingSenderId: "879799797410",
+            appId: "1:879799797410:web:9a52fbf15ce59b8bda39fb",
+            measurementId: "G-MSMWJ52KBW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Populate dropdowns with course names from Firestore
+        async function populateCourseDropdowns() {
+            const courseSelectElements = document.querySelectorAll('.course-dropdown');
+            const coursesColRef = collection(db, 'courses');
+            const coursesSnapshot = await getDocs(coursesColRef);
+            coursesSnapshot.forEach(doc => {
+                courseSelectElements.forEach(select => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;  // Correct value for course ID
+                    option.textContent = doc.data().courseName;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Run this when the page loads to populate course dropdowns
+        window.onload = populateCourseDropdowns;
+
+        // Add Subject Functionality
+        document.getElementById('add-subject').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const courseId = document.getElementById('subject-course-id').value;
+            const year = document.getElementById('subject-year').value;
+            const semester = document.getElementById('subject-semester').value;
+            const subjectId = document.getElementById('subject-id').value;
+            const subjectName = document.getElementById('subject-name').value;
+            const units = document.getElementById('subject-units').value;
+            const prerequisites = document.getElementById('subject-prerequisites').value.split(',');
+
+            try {
+                const courseRef = doc(db, 'courses', courseId);
+                const courseSnapshot = await getDoc(courseRef);
+
+                if (courseSnapshot.exists()) {
+                    const existingData = courseSnapshot.data();
+                    const existingSubjects = existingData.subjects || {};
+
+                    // Add new subject
+                    if (!existingSubjects[year]) {
+                        existingSubjects[year] = {};
+                    }
+                    if (!existingSubjects[year][semester]) {
+                        existingSubjects[year][semester] = [];
+                    }
+                    existingSubjects[year][semester].push({
+                        subjectId,
+                        subjectName,
+                        units: Number(units),
+                        prerequisites: prerequisites.map(p => p.trim()), // Clean up whitespace
+                        status: 'active' // Default status
+                    });
+
+                    // Update Firestore with the modified subjects
+                    await setDoc(courseRef, { subjects: existingSubjects }, { merge: true });
+                    alert('Subject added successfully!');
+                    document.getElementById('subject-form').reset(); // Reset form after submission
+                } else {
+                    alert('Course does not exist.');
+                }
+            } catch (error) {
+                console.error('Error adding subject:', error);
+                alert('Error adding subject: ' + error.message);
+            }
+        });
+
+        // Delete Subject Functionality
+        document.getElementById('delete-subject').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const courseId = document.getElementById('delete-subject-course-id').value;
+            const subjectId = document.getElementById('delete-subject-id').value;
+
+            // Confirmation prompt
+            const confirmDelete = confirm(`Are you sure you want to delete the subject ${subjectId} from course ${courseId}?`);
+            if (!confirmDelete) return; // Exit if the user cancels
+
+            try {
+                const courseRef = doc(db, 'courses', courseId);
+                const courseSnapshot = await getDoc(courseRef);
+
+                if (courseSnapshot.exists()) {
+                    const existingData = courseSnapshot.data();
+                    const existingSubjects = existingData.subjects || {};
+
+                    // Find and remove the subject
+                    for (const year in existingSubjects) {
+                        for (const semester in existingSubjects[year]) {
+                            existingSubjects[year][semester] = existingSubjects[year][semester].filter(sub => sub.subjectId !== subjectId);
+                        }
+                    }
+
+                    // Update Firestore with the modified subjects
+                    await setDoc(courseRef, { subjects: existingSubjects }, { merge: true });
+                    alert('Subject deleted successfully!');
+                    document.getElementById('delete-subject-form').reset(); // Reset form after submission
+                } else {
+                    alert('Course does not exist.');
+                }
+            } catch (error) {
+                console.error('Error deleting subject:', error);
+                alert('Error deleting subject: ' + error.message);
+            }
+        });
+
+      // Set Maximum Units Functionality
+document.getElementById('set-max-units').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const courseId = document.getElementById('max-units-course-id').value;
+    const year = document.getElementById('max-units-year').value;
+    const semester = document.getElementById('max-units-semester').value;
+    const maxUnits = document.getElementById('max-units').value;
+
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnapshot = await getDoc(courseRef);
+
+        if (courseSnapshot.exists()) {
+            // Construct the correct path: years -> [year] -> [semester] -> maxUnits
+            const maxUnitsField = `years.${year}.${semester}.maxUnits`;
+
+            // Update the nested structure for maxUnits
+            await updateDoc(courseRef, {
+                [maxUnitsField]: Number(maxUnits)
+            });
+
+            alert('Maximum units updated successfully!');
+            document.getElementById('max-units-form').reset(); // Reset form after submission
+        } else {
+            alert('Course does not exist.');
+        }
+    } catch (error) {
+        console.error('Error updating max units:', error);
+        alert('Error updating max units: ' + error.message);
+    }
+});
+
+        // Delete Course Functionality
+        document.getElementById('delete-course').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const courseId = document.getElementById('delete-course-id').value;
+
+            // Confirmation prompt
+            const confirmDelete = confirm(`Are you sure you want to delete the course ${courseId}?`);
+            if (!confirmDelete) return; // Exit if the user cancels
+
+            try {
+                const courseRef = doc(db, 'courses', courseId);
+                await deleteDoc(courseRef);
+                alert('Course deleted successfully!');
+                document.getElementById('delete-course-form').reset(); // Reset form after submission
+                populateCourseDropdowns(); // Refresh dropdowns
+            } catch (error) {
+                console.error('Error deleting course:', error);
+                alert('Error deleting course: ' + error.message);
+            }
+        });
+
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 3px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .button-container {
+            text-align: right; /* Aligns the button to the right */
+            margin-bottom: 20px; /* Adds some space below the button */
+        }
+        .button-container button {
+            background-color: #007bff; /* Blue color for the new button */
+        }
+        .button-container button:hover {
+            background-color: #0069d9; /* Darker blue on hover */
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+
+    <!-- Link to Admin Students Page -->
+    <div class="button-container">
+        <button onclick="window.location.href='admin_students.html'">Manage Students</button>
+    </div>
+
+    <!-- Add Subject Section -->
+    <h2>Add Subject</h2>
+    <form id="subject-form">
+        <label for="subject-course-id">Course:</label>
+        <select id="subject-course-id" class="course-dropdown" required></select>
+
+        <label for="subject-year">Year:</label>
+        <select id="subject-year" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+
+        <label for="subject-semester">Semester:</label>
+        <select id="subject-semester" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+        </select>
+
+        <label for="subject-id">Subject ID:</label>
+        <input type="text" id="subject-id" required />
+
+        <label for="subject-name">Subject Name:</label>
+        <input type="text" id="subject-name" required />
+
+        <label for="subject-units">Units:</label>
+        <input type="number" id="subject-units" min="1" required />
+
+        <label for="subject-prerequisites">Prerequisites (comma-separated):</label>
+        <input type="text" id="subject-prerequisites" />
+
+        <button type="submit" id="add-subject">Add Subject</button>
+    </form>
+
+    <!-- Delete Subject Section -->
+    <h2>Delete Subject</h2>
+    <form id="delete-subject-form">
+        <label for="delete-subject-course-id">Course:</label>
+        <select id="delete-subject-course-id" class="course-dropdown" required></select>
+
+        <label for="delete-subject-id">Subject ID:</label>
+        <input type="text" id="delete-subject-id" required />
+
+        <button type="submit" id="delete-subject">Delete Subject</button>
+    </form>
+
+    <!-- Set Maximum Units Section -->
+    <h2>Set Maximum Units</h2>
+    <form id="max-units-form">
+        <label for="max-units-course-id">Course:</label>
+        <select id="max-units-course-id" class="course-dropdown" required></select>
+
+        <label for="max-units-year">Year:</label>
+        <select id="max-units-year" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
+
+        <label for="max-units-semester">Semester:</label>
+        <select id="max-units-semester" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+        </select>
+
+        <label for="max-units">Maximum Units:</label>
+        <input type="number" id="max-units" min="1" required />
+
+        <button type="submit" id="set-max-units">Set Maximum Units</button>
+    </form>
+
+    <!-- Delete Course Section -->
+    <h2>Delete Course</h2>
+    <form id="delete-course-form">
+        <label for="delete-course-id">Course ID:</label>
+        <input type="text" id="delete-course-id" required />
+
+        <button type="submit" id="delete-course">Delete Course</button>
+    </form>
+</body>
+</html>
