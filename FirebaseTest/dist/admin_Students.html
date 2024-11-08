@@ -4,105 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Students</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif; 
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-
-        h1, h2 {
-            color: #333;
-        }
-
-        form {
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        select, input[type="text"], input[type="checkbox"] {
-            margin: 10px 0;
-            font-size: 16px;
-            padding: 10px;
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .subjects-container {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fafafa;
-        }
-
-        .checkbox-container {
-            display: flex;
-            flex-direction: column;
-            margin: 10px;
-            width: 100%;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            margin: 5px 0;
-            padding: 5px 0;
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-
-        @media (max-width: 600px) {
-            .checkbox-container {
-                width: 100%;
-            }
-        }
-
-        .subject-list {
-            flex: 1;
-            margin: 0 10px;
-        }
-
-        .flex-container {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .subject-column {
-            flex: 1;
-            margin-right: 20px;
-        }
-
-        .subject-column:last-child {
-            margin-right: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-firestore.js"></script>
@@ -293,76 +195,99 @@
     </script>
 </head>
 <body>
-    <h1>Admin Panel</h1>
+<section class="admin-panel">
+    <section class="add-student">
+        <div class="form-student">
 
-    <form id="add-student-form" onsubmit="addStudent(); return false;">
-        <h2>Add Student</h2>
-        <label for="student-course">Course:</label>
-        <select id="student-course" required></select>
+            <h1>Admin Panel</h1>
 
-        <label for="student-id">Student ID:</label>
-        <input type="text" id="student-id" required>
-
-        <label for="student-name">Name:</label>
-        <input type="text" id="student-name" required>
-
-        <label for="student-year">Year Level:</label>
-        <select id="student-year" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
-
-        <label for="student-semester">Semester:</label>
-        <select id="student-semester" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-        </select>
-
-        <label for="student-status">Status:</label>
-        <select id="student-status" required>
-            <option value="Regular">Regular</option>
-            <option value="Irregular">Irregular</option>
-        </select>
-
-        <button type="submit">Add Student</button>
-    </form>
-
-    <form id="add-enrollment-form" onsubmit="addEnrollment(); return false;">
-        <h2>Add Enrollment</h2>
-        <label for="enrollment-course">Course:</label>
-        <select id="enrollment-course" onchange="filterSubjects();" required></select>
-
-        <label for="enrollment-student-id">Student ID:</label>
-        <input type="text" id="enrollment-student-id" required>
-
-        <label for="enrollment-year-level">Year Level:</label>
-        <select id="enrollment-year-level" onchange="filterSubjects();" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
-
-        <label for="enrollment-semester">Semester:</label>
-        <select id="enrollment-semester" onchange="filterSubjects();" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-        </select>
-
-        <div class="subjects-container flex-container">
-            <div class="subject-column">
-                
-                <div id="enrollment-subjects" class="checkbox-container"></div>
+            <!-- Link to Admin Students Page -->
+            <div class="button-container">
+                <button onclick="window.location.href='admin.html'" class="normal">Back</button>
             </div>
-            <div class="subject-column">
-               
-                <div id="enrollment-failed-subjects" class="checkbox-container"></div>
-            </div>
+            
+            <br>
+
+            <form id="add-student-form" onsubmit="addStudent(); return false;">
+                <h2>Add Student</h2>
+
+                <label for="student-course">Course:</label>
+                <select id="student-course" required></select>
+        
+                <label for="student-id">Student ID:</label>
+                <input type="text" id="student-id" required>
+        
+                <label for="student-name">Name:</label>
+                <input type="text" id="student-name" required>
+        
+                <label for="student-year">Year Level:</label>
+                <select id="student-year" required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+        
+                <label for="student-semester">Semester:</label>
+                <select id="student-semester" required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+        
+                <label for="student-status">Status:</label>
+                <select id="student-status" required>
+                    <option value="Regular">Regular</option>
+                    <option value="Irregular">Irregular</option>
+                </select>
+        
+                <button type="submit" class="normal">Add Student</button>
+            </form>
+    
         </div>
+    </section>
 
-        <button type="submit">Add Enrollment</button>
-    </form>
+    <section class="add-enrollment">
+        <div class="form-enroll">
+            <form id="add-enrollment-form" onsubmit="addEnrollment(); return false;">
+
+                <h2>Add Enrollment</h2>
+                <label for="enrollment-course">Course:</label>
+                <select id="enrollment-course" onchange="filterSubjects();" required></select>
+        
+                <label for="enrollment-student-id">Student ID:</label>
+                <input type="text" id="enrollment-student-id" required>
+        
+                <label for="enrollment-year-level">Year Level:</label>
+                <select id="enrollment-year-level" onchange="filterSubjects();" required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+        
+                <label for="enrollment-semester">Semester:</label>
+                <select id="enrollment-semester" onchange="filterSubjects();" required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+        
+                <div class="subjects-container flex-container">
+                    <div class="subject-column">
+                        
+                        <div id="enrollment-subjects" class="checkbox-container"></div>
+                    </div>
+                    <div class="subject-column">
+                       
+                        <div id="enrollment-failed-subjects" class="checkbox-container"></div>
+                    </div>
+                </div>
+        
+                <button type="submit" class="normal">Add Enrollment</button>
+            </form>    
+        </div>    
+    </section>
+
+</section>
+
 </body>
 </html>

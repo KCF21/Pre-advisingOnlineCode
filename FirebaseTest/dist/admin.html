@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+
     <title>Admin Panel</title>
     <!-- Import Firebase CDN -->
     <script type="module">
@@ -181,145 +183,106 @@ document.getElementById('set-max-units').addEventListener('click', async (e) => 
         });
 
     </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        form {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #fff;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input, select {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-        }
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 3px;
-            background-color: #28a745;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        .button-container {
-            text-align: right; /* Aligns the button to the right */
-            margin-bottom: 20px; /* Adds some space below the button */
-        }
-        .button-container button {
-            background-color: #007bff; /* Blue color for the new button */
-        }
-        .button-container button:hover {
-            background-color: #0069d9; /* Darker blue on hover */
-        }
-    </style>
+
 </head>
+
 <body>
-    <h1>Admin Panel</h1>
+    <section class="admin-panel">
+        <h1>Admin Panel</h1>
+        
+        <!-- Link to Admin Students Page -->
+        <div class="button-container">
+            <button onclick="window.location.href='admin_students.html'" class="normal">Manage Students</button>
+        </div>
 
-    <!-- Link to Admin Students Page -->
-    <div class="button-container">
-        <button onclick="window.location.href='admin_students.html'">Manage Students</button>
-    </div>
-
-    <!-- Add Subject Section -->
-    <h2>Add Subject</h2>
-    <form id="subject-form">
-        <label for="subject-course-id">Course:</label>
-        <select id="subject-course-id" class="course-dropdown" required></select>
-
-        <label for="subject-year">Year:</label>
-        <select id="subject-year" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
-
-        <label for="subject-semester">Semester:</label>
-        <select id="subject-semester" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-        </select>
-
-        <label for="subject-id">Subject ID:</label>
-        <input type="text" id="subject-id" required />
-
-        <label for="subject-name">Subject Name:</label>
-        <input type="text" id="subject-name" required />
-
-        <label for="subject-units">Units:</label>
-        <input type="number" id="subject-units" min="1" required />
-
-        <label for="subject-prerequisites">Prerequisites (comma-separated):</label>
-        <input type="text" id="subject-prerequisites" />
-
-        <button type="submit" id="add-subject">Add Subject</button>
-    </form>
-
-    <!-- Delete Subject Section -->
-    <h2>Delete Subject</h2>
-    <form id="delete-subject-form">
-        <label for="delete-subject-course-id">Course:</label>
-        <select id="delete-subject-course-id" class="course-dropdown" required></select>
-
-        <label for="delete-subject-id">Subject ID:</label>
-        <input type="text" id="delete-subject-id" required />
-
-        <button type="submit" id="delete-subject">Delete Subject</button>
-    </form>
-
-    <!-- Set Maximum Units Section -->
-    <h2>Set Maximum Units</h2>
-    <form id="max-units-form">
-        <label for="max-units-course-id">Course:</label>
-        <select id="max-units-course-id" class="course-dropdown" required></select>
-
-        <label for="max-units-year">Year:</label>
-        <select id="max-units-year" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
-
-        <label for="max-units-semester">Semester:</label>
-        <select id="max-units-semester" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-        </select>
-
-        <label for="max-units">Maximum Units:</label>
-        <input type="number" id="max-units" min="1" required />
-
-        <button type="submit" id="set-max-units">Set Maximum Units</button>
-    </form>
-
-    <!-- Delete Course Section -->
-    <h2>Delete Course</h2>
-    <form id="delete-course-form">
-        <label for="delete-course-id">Course ID:</label>
-        <input type="text" id="delete-course-id" required />
-
-        <button type="submit" id="delete-course">Delete Course</button>
-    </form>
+        <section class="add-subject">
+            <!-- Add Subject Section -->
+                <h2>Add Subject</h2>
+                    <form id="subject-form">
+                        <label for="subject-course-id">Course:</label>
+                        <select id="subject-course-id" class="course-dropdown" required></select>
+        
+                        <label for="subject-year">Year:</label>
+                        <select id="subject-year" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+        
+                        <label for="subject-semester">Semester:</label>
+                        <select id="subject-semester" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+        
+                        <label for="subject-id">Subject ID:</label>
+                        <input type="text" id="subject-id" required />
+        
+                        <label for="subject-name">Subject Name:</label>
+                        <input type="text" id="subject-name" required />
+        
+                        <label for="subject-units">Units:</label>
+                        <input type="number" id="subject-units" min="1" required />
+        
+                        <label for="subject-prerequisites">Prerequisites (comma-separated):</label>
+                        <input type="text" id="subject-prerequisites" />
+        
+                        <button type="submit" id="add-subject" class="normal">Add Subject</button>
+                </form>
+            </section>
+        
+            <section class="delete-subject">
+            <!-- Delete Subject Section -->
+                <h2>Delete Subject</h2>
+                    <form id="delete-subject-form">
+                        <label for="delete-subject-course-id">Course:</label>
+                        <select id="delete-subject-course-id" class="course-dropdown" required></select>
+        
+                        <label for="delete-subject-id">Subject ID:</label>
+                        <input type="text" id="delete-subject-id" required />
+        
+                        <button type="submit" id="delete-subject" class="normal">Delete Subject</button>
+                    </form>
+            </section>
+        
+            <section class="set-maximum-units">
+            <!-- Set Maximum Units Section -->
+                <h2>Set Maximum Units</h2>
+                    <form id="max-units-form">
+                        <label for="max-units-course-id">Course:</label>
+                        <select id="max-units-course-id" class="course-dropdown" required></select>
+        
+                        <label for="max-units-year">Year:</label>
+                        <select id="max-units-year" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+        
+                        <label for="max-units-semester">Semester:</label>
+                        <select id="max-units-semester" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+        
+                        <label for="max-units">Maximum Units:</label>
+                        <input type="number" id="max-units" min="1" required />
+        
+                        <button type="submit" id="set-max-units" class="normal">Set Maximum Units</button>
+                    </form>
+            </section>
+            <section class="delete-course">
+            <!-- Delete Course Section -->
+                <h2>Delete Course</h2>
+                    <form id="delete-course-form">
+                        <label for="delete-course-id">Course ID:</label>
+                        <input type="text" id="delete-course-id" required />
+        
+                        <button type="submit" id="delete-course" class="normal">Delete Course</button>
+                    </form>
+            </section>
+    </section>    
 </body>
 </html>
